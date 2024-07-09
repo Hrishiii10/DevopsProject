@@ -1,0 +1,25 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Clone the repository containing the Python script
+                git 'https://your-git-repository-url.git'
+            }
+        }
+        stage('Run Script') {
+            steps {
+                // Run the Python script
+                sh 'Code1.py'
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up workspace after build
+            cleanWs()
+        }
+    }
+}
