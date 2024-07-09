@@ -5,7 +5,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Clone the repository containing the Python script
-                git 'https://your-git-repository-url.git'
+                git 'https://github.com/Hrishiii10/DevopsProject.git'
             }
         }
         stage('Run Script') {
