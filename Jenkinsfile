@@ -78,4 +78,14 @@ pipeline {
       
     }
         }
-   
+   node {
+  stage('SCM') {
+    checkout scm
+  }
+  stage('SonarQube Analysis') {
+    def mvn = tool 'Maven Mindcraft';
+    withSonarQubeEnv() {
+      sh "${mvn}/bin/mvn clean verify sonar:sonar -Dsonar.projectKey=JEN -Dsonar.projectName='JEN'"
+    }
+  }
+}
