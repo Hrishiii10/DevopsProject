@@ -23,7 +23,7 @@ pipeline {
         stage("Check out") {
             steps {
                 script {
-                    git branch: '', url: 'https://github.com/Hrishiii10/DevopsProject.git';
+                    git branch: 'NEXUS', url: 'https://github.com/Hrishiii10/DevopsProject.git';
                 }
             }
         }
