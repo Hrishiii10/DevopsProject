@@ -75,18 +75,4 @@ pipeline {
                 }
             }
         }
-        stage ('Execute Ansible Play - CD'){
-            agent {
-                label 'ansible'
-            }
-            steps{
-                script {
-                    git branch: 'NEXUS', url: 'https://github.com/Hrishiii10/DevopsProject.git';
-                }
-                sh '''
-                    ansible-playbook -e vers=${BUILD_NUMBER} roles/site.yml
-                '''
-            }
-        }
-    }
-}
+      
