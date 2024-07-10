@@ -1,82 +1,92 @@
 pipeline {
     agent any
+    tools {
+        maven "localMaven"
+        jdk "Java8"
+    }
 
     environment {
-        JIRA_SITE = 'https://mindcraftteam.atlassian.net/'
-        JIRA_CREDENTIALS_ID = '91b08b9f-b17e-40e3-b539-4d6bae40d3d0'
+        // This can be nexus3 or nexus2
+        NEXUS_VERSION = "nexus3"
+        // This can be http or https
+        NEXUS_PROTOCOL = "http"
+        // Where your Nexus is running
+        NEXUS_URL = "65.2.189.169:8081"
+        // Repository where we will upload the artifact
+        NEXUS_REPOSITORY = "LoginWebApp"
+        // Jenkins credential id to authenticate to Nexus OSS
+        NEXUS_CREDENTIAL_ID = "nexusCredential"
+        ARTIFACT_VERSION = "${BUILD_NUMBER}"
     }
 
     stages {
-        stage('Build') {
+        stage("Check out") {
             steps {
                 script {
-                    // Build logic (e.g., using Maven)
-                    sh 'mvn clean package'
-
-                    // Upload artifact to Nexus
-                    nexusArtifactUploader artifacts: [[artifactId: 'your-artifact-id', file: 'target/your-artifact.jar', type: 'jar']],
-                                          credentialsId: 'nexus-credentials-id',
-                                          groupId: 'your-group-id',
-                                          nexusUrl: 'http://nexus.yourdomain.com',
-                                          nexusVersion: 'nexus3',
-                                          protocol: 'http',
-                                          repository: 'your-repository',
-                                          version: '1.0.0'
-
-                    // Update Jira
-                    jiraComment(issueKey: 'JIRA-1234', comment: 'Code checked in and build successful.')
-                    jiraTransitionIssue(issueKey: 'JIRA-1234', transition: 'In Progress')
+                    git branch: 'feature/nexusUpload', url: 'https://github.com/ranjit4github/LoginWebApp.git';
                 }
             }
         }
 
-        stage('Deploy to Dev') {
+        stage("mvn build") {
             steps {
                 script {
-                    // Deployment logic for Dev environment
-                    sh 'deploy to dev script'
-
-                    // Update Jira
-                    jiraComment(issueKey: 'JIRA-1234', comment: 'Deployment to Dev environment successful.')
+                    sh "mvn clean package"
                 }
             }
         }
 
-        stage('Deploy to SIT') {
+        stage("publish to nexus") {
             steps {
                 script {
-                    // Deployment logic for SIT environment
-                    sh 'deploy to sit script'
+                    // Read POM xml file using 'readMavenPom' step , this step 'readMavenPom' is included in: https://plugins.jenkins.io/pipeline-utility-steps
+                    pom = readMavenPom file: "pom.xml";
+                    // Find built artifact under target folder
+                    filesByGlob = findFiles(glob: "target/*.${pom.packaging}");
+                    // Print some info from the artifact found
+                    echo "${filesByGlob[0].name} ${filesByGlob[0].path} ${filesByGlob[0].directory} ${filesByGlob[0].length} ${filesByGlob[0].lastModified}"
+                    // Extract the path from the File found
+                    artifactPath = filesByGlob[0].path;
+                    // Assign to a boolean response verifying If the artifact name exists
+                    artifactExists = fileExists artifactPath;
 
-                    // Update Jira
-                    jiraComment(issueKey: 'JIRA-1234', comment: 'Deployment to SIT environment successful.')
+                    if(artifactExists) {
+                        echo "*** File: ${artifactPath}, group: ${pom.groupId}, packaging: ${pom.packaging}, version ${pom.version}";
+
+                        nexusArtifactUploader(
+                            nexusVersion: NEXUS_VERSION,
+                            protocol: NEXUS_PROTOCOL,
+                            nexusUrl: NEXUS_URL,
+                            groupId: pom.groupId,
+                            version: ARTIFACT_VERSION,
+                            repository: NEXUS_REPOSITORY,
+                            credentialsId: NEXUS_CREDENTIAL_ID,
+                            artifacts: [
+                                // Artifact generated such as .jar, .ear and .war files.
+                                [artifactId: pom.artifactId,
+                                classifier: '',
+                                file: artifactPath,
+                                type: pom.packaging]
+                            ]
+                        );
+
+                    } else {
+                        error "*** File: ${artifactPath}, could not be found";
+                    }
                 }
             }
         }
-
-        stage('Deploy to UAT') {
-            steps {
-                script {
-                    // Deployment logic for UAT environment
-                    sh 'deploy to uat script'
-
-                    // Update Jira
-                    jiraComment(issueKey: 'JIRA-1234', comment: 'Deployment to UAT environment successful.')
-                    jiraTransitionIssue(issueKey: 'JIRA-1234', transition: 'In UAT')
-                }
+        stage ('Execute Ansible Play - CD'){
+            agent {
+                label 'ansible'
             }
-        }
-
-        stage('Deploy to Prod') {
-            steps {
+            steps{
                 script {
-                    // Deployment logic for Prod environment
-                    sh 'deploy to prod script'
-
-                    // Update Jira
-                    jiraComment(issueKey: 'JIRA-1234', comment: 'Deployment to Production environment successful.')
-                    jiraTransitionIssue(issueKey: 'JIRA-1234', transition: 'Done')
+                    git branch: 'feature/ansibleNexus', url: 'https://github.com/ranjit4github/Ansible_Demo_Project.git';
                 }
+                sh '''
+                    ansible-playbook -e vers=${BUILD_NUMBER} roles/site.yml
+                '''
             }
         }
     }
