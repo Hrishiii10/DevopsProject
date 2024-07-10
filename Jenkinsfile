@@ -15,7 +15,7 @@ pipeline {
         // Repository where we will upload the artifact
         NEXUS_REPOSITORY = "maven-nexus-repo"
         // Jenkins credential id to authenticate to Nexus OSS
-        NEXUS_CREDENTIAL_ID = ""
+        NEXUS_CREDENTIAL_ID = "0f9a6ad5-0fa3-4aa3-bc45-28386d8c5e66"
         ARTIFACT_VERSION = "${BUILD_NUMBER}"
     }
 
@@ -82,7 +82,7 @@ pipeline {
             }
             steps{
                 script {
-                    git branch: 'feature/ansibleNexus', url: 'https://github.com/ranjit4github/Ansible_Demo_Project.git';
+                    git branch: 'NEXUS', url: 'https://github.com/Hrishiii10/DevopsProject.git';
                 }
                 sh '''
                     ansible-playbook -e vers=${BUILD_NUMBER} roles/site.yml
