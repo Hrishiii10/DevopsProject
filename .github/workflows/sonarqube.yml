@@ -1,0 +1,27 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+
+jobs:
+  build:
+    name: Build and analyze
+    runs-on: CentOS Linux
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.sqp_70621d9f059414b7713cc56e59bb79b755cf4644 }}
+          SONAR_HOST_URL: ${{ secrets.http://192.168.5.82:9000 }}
+      # If you wish to fail your job when the Quality Gate is red, uncomment the
+      # following lines. This would typically be used to fail a deployment.
+      # - uses: sonarsource/sonarqube-quality-gate-action@master
+      #   timeout-minutes: 5
+        env:
+        SONAR_TOKEN: ${{ secrets.sqp_70621d9f059414b7713cc56e59bb79b755cf4644 }}
