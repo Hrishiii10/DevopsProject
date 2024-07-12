@@ -22,8 +22,8 @@ jobs:
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
         with:
-          sonar-token: ${{ secrets.sqp_70621d9f059414b7713cc56e59bb79b755cf4644}}
-          sonar-host-url: ${{ secrets.http://192.168.5.82:9000 }}
+          sonar-token: ${{sqp_70621d9f059414b7713cc56e59bb79b755cf4644}}
+          sonar-host-url: ${{http://192.168.5.82:9000 }}
           project-key: 'Check'
           # Add other optional parameters like sources, exclusions, etc.
       
@@ -47,7 +47,7 @@ jobs:
       - name: Check Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@master
         with:
-          sonar-token: ${{ secrets.sqp_70621d9f059414b7713cc56e59bb79b755cf4644 }}
-          sonar-host-url: ${{ secrets.http://192.168.5.82:9000 }}
+          sonar-token: ${{sqp_70621d9f059414b7713cc56e59bb79b755cf4644 }}
+          sonar-host-url: ${{http://192.168.5.82:9000 }}
           project-key: 'check'
 
