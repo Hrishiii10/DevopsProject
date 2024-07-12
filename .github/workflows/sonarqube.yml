@@ -1,27 +1,53 @@
-name: Build
+name: Build and Analyze
 
 on:
   push:
     branches:
       - main
 
-
 jobs:
   build:
     name: Build and analyze
-    runs-on: CentOS Linux
+    runs-on: CentOS-Linux
     
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+      - name: Set up JDK
+        uses: actions/setup-java@v2
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - uses: sonarsource/sonarqube-scan-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.sqp_70621d9f059414b7713cc56e59bb79b755cf4644 }}
-          SONAR_HOST_URL: ${{ secrets.http://192.168.5.82:9000 }}
-      # If you wish to fail your job when the Quality Gate is red, uncomment the
-      # following lines. This would typically be used to fail a deployment.
-      # - uses: sonarsource/sonarqube-quality-gate-action@master
-      #   timeout-minutes: 5
-        env:
-        SONAR_TOKEN: ${{ secrets.sqp_70621d9f059414b7713cc56e59bb79b755cf4644 }}
+          java-version: '17'
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        with:
+          sonar-token: ${{ secrets.sqp_70621d9f059414b7713cc56e59bb79b755cf4644}}
+          sonar-host-url: ${{ secrets.http://192.168.5.82:9000/ }}
+          project-key: 'Check'
+          # Add other optional parameters like sources, exclusions, etc.
+      
+      - name: Get last commit author
+        id: last_commit_author
+        run: |
+          last_commit_author=$(git log -1 --pretty=format:'%ae' ${{ github.event.after }})
+          echo "::set-output name=author::$last_commit_author"
+
+      - name: Assign Issues
+        run: |
+          # Script to assign issues based on last commit author
+          # Example script (modify based on your requirements):
+          sonar_report_path="path/to/sonarqube/report.json"
+          last_commit_author=$(echo "${{ steps.last_commit_author.outputs.author }}")
+          jq --arg author "$last_commit_author" '.issues[] | select(.file.contains($author)) | .assignee = $author' $sonar_report_path > assigned_report.json
+          # Upload or use assigned_report.json to update issue assignment in SonarQube
+
+      # Optionally, you may want to fail the job based on SonarQube Quality Gate status
+      
+      - name: Check Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        with:
+          sonar-token: ${{ secrets.sqp_70621d9f059414b7713cc56e59bb79b755cf4644 }}
+          sonar-host-url: ${{ secrets.http://192.168.5.82:9000/ }}
+          project-key: 'check'
+
