@@ -14,7 +14,7 @@ pipeline {
                     sh 'mvn clean package'
 
                     // Upload artifact to Nexus
-                    nexusArtifactUploader artifacts: [[artifactId: 'your-artifact-id', file: 'target/your-artifact.jar', type: 'jar']],
+                    nexusArtifactUploader artifacts: [[artifactId: 'your-artifact-id', file: 'target/your-artifact.tgz', type: 'tgz']],
                                           credentialsId: 'nexus-credentials-id',
                                           groupId: 'your-group-id',
                                           nexusUrl: 'http://nexus.yourdomain.com',
